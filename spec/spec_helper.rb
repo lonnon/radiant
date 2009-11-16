@@ -1,74 +1,54 @@
-unless defined? SPEC_ROOT
-  ENV["RAILS_ENV"] = "test"
+# This file is copied to ~/spec when you run 'ruby script/generate rspec'
+# from the project root directory.
+ENV["RAILS_ENV"] ||= 'test'
+require File.expand_path(File.join(File.dirname(__FILE__),'..','config','environment'))
+require 'spec/autorun'
+require 'spec/rails'
 
-  SPEC_ROOT = File.expand_path(File.dirname(__FILE__))
+# Uncomment the next line to use webrat's matchers
+#require 'webrat/integrations/rspec-rails'
 
-  unless defined? RADIANT_ROOT
-    if env_file = ENV["RADIANT_ENV_FILE"]
-      require env_file
-    else
-      require File.expand_path(SPEC_ROOT + "/../config/environment")
-    end
-  end
-  require 'spec'
-  require 'spec/rails'
-  require 'dataset'
+# Requires supporting files with custom matchers and macros, etc,
+# in ./support/ and its subdirectories.
+Dir[File.expand_path(File.join(File.dirname(__FILE__),'support','**','*.rb'))].each {|f| require f}
 
-  module Kernel
-    def rputs(*args)
-      puts *["<pre>", args.collect {|a| CGI.escapeHTML(a.inspect)}, "</pre>"]
-    end
-  end
+Spec::Runner.configure do |config|
+  # If you're not using ActiveRecord you should remove these
+  # lines, delete config/database.yml and disable :active_record
+  # in your config/boot.rb
+  config.use_transactional_fixtures = true
+  config.use_instantiated_fixtures  = false
+  config.fixture_path = RAILS_ROOT + '/spec/fixtures/'
 
-  class ActiveSupport::TestCase
-    include Dataset
-    datasets_directory "#{RADIANT_ROOT}/spec/datasets"
-    Dataset::ContextClassMethods.datasets_database_dump_path = File.expand_path(RAILS_ROOT + '/tmp/dataset')
-
-    class << self
-      # Class method for test helpers
-      def test_helper(*names)
-        names.each do |name|
-          name = name.to_s
-          name = $1 if name =~ /^(.*?)_test_helper$/i
-          name = name.singularize
-          first_time = true
-          begin
-            constant = (name.camelize + 'TestHelper').constantize
-            self.class_eval { include constant }
-          rescue NameError
-            filename = File.expand_path(SPEC_ROOT + '/../test/helpers/' + name + '_test_helper.rb')
-            require filename if first_time
-            first_time = false
-            retry
-          end
-        end
-      end
-      alias :test_helpers :test_helper
-    end
-  end
-
-  Dir[RADIANT_ROOT + '/spec/matchers/*_matcher.rb'].each do |matcher|
-    require matcher
-  end
-
-  module Spec
-    module Application
-      module ExampleExtensions
-        def rails_log
-          log = IO.read(RAILS_ROOT + '/log/test.log')
-          log.should_not be_nil
-          log
-        end
-      end
-    end
-  end
-
-  Spec::Runner.configure do |config|
-    config.include Spec::Application::ExampleExtensions
-
-    config.use_transactional_fixtures = true
-    config.use_instantiated_fixtures  = false
-    config.fixture_path = RAILS_ROOT + '/spec/fixtures/'
-  end
+  # == Fixtures
+  #
+  # You can declare fixtures for each example_group like this:
+  #   describe "...." do
+  #     fixtures :table_a, :table_b
+  #
+  # Alternatively, if you prefer to declare them only once, you can
+  # do so right here. Just uncomment the next line and replace the fixture
+  # names with your fixtures.
+  #
+  # config.global_fixtures = :table_a, :table_b
+  #
+  # If you declare global fixtures, be aware that they will be declared
+  # for all of your examples, even those that don't use them.
+  #
+  # You can also declare which fixtures to use (for example fixtures for test/fixtures):
+  #
+  # config.fixture_path = RAILS_ROOT + '/spec/fixtures/'
+  #
+  # == Mock Framework
+  #
+  # RSpec uses it's own mocking framework by default. If you prefer to
+  # use mocha, flexmock or RR, uncomment the appropriate line:
+  #
+  # config.mock_with :mocha
+  # config.mock_with :flexmock
+  # config.mock_with :rr
+  #
+  # == Notes
+  #
+  # For more information take a look at Spec::Runner::Configuration and Spec::Runner
 end
